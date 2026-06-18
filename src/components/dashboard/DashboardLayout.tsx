@@ -1,3 +1,4 @@
+import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import { getCurrentUser } from "@/lib/auth";
 import { Link, useRouterState } from "@tanstack/react-router";
@@ -28,16 +29,20 @@ const nav = [
 export function DashboardLayout({ children }: { children: ReactNode }) {
   const [userEmail, setUserEmail] = useState("");
   useEffect(() => {
-  async function loadUser() {
-    const user = await getCurrentUser();
+    async function loadUser() {
+      const user = await getCurrentUser();
 
-    if (user) {
-      setUserEmail(user.email ?? "");
+      if (user) {
+        setUserEmail(user.email ?? "");
+      }
     }
-  }
 
-  loadUser();
-}, []);
+    loadUser();
+  }, []);
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/login";
+  };
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
     <div className="flex min-h-screen w-full">
@@ -55,11 +60,10 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
               <Link
                 key={item.to}
                 to={item.to}
-                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${
-                  active
-                    ? "gradient-primary text-primary-foreground glow-primary"
-                    : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
-                }`}
+                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${active
+                  ? "gradient-primary text-primary-foreground glow-primary"
+                  : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
+                  }`}
               >
                 <item.icon className="h-4 w-4" />
                 {item.label}
@@ -67,9 +71,13 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
-        <Link to="/" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-foreground">
-          <LogOut className="h-4 w-4" /> Logout
-        </Link>
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-foreground text-left"
+        >
+          <LogOut className="h-4 w-4" />
+          Logout
+        </button>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-border/50 bg-background/60 px-4 backdrop-blur-xl sm:px-6">

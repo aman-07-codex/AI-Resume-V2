@@ -1,3 +1,4 @@
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useEffect, useState } from "react";
 import { getCurrentProfile } from "@/lib/profile";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -33,6 +34,7 @@ function Dashboard() {
     loadProfile();
   }, []);
   return (
+    <ProtectedRoute>
     <DashboardLayout>
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
@@ -129,5 +131,6 @@ function Dashboard() {
         </div>
       </div>
     </DashboardLayout>
+  </ProtectedRoute>
   );
 }

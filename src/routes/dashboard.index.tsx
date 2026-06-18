@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import { getCurrentProfile } from "@/lib/profile";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -18,11 +20,25 @@ const recent = [
 ];
 
 function Dashboard() {
+  const [name, setName] = useState("");
+  useEffect(() => {
+    async function loadProfile() {
+      const profile = await getCurrentProfile();
+
+      if (profile) {
+        setName(profile.full_name);
+      }
+    }
+
+    loadProfile();
+  }, []);
   return (
     <DashboardLayout>
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Welcome back, Alex</h1>
+          <h1 className="text-3xl font-bold">
+            Welcome back, {name || "User"}
+          </h1>
           <p className="mt-1 text-muted-foreground">Let's get your resume interview-ready.</p>
         </div>
       </div>

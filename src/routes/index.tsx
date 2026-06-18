@@ -1,3 +1,4 @@
+import { supabase } from "@/lib/supabase";
 import { createFileRoute } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import {
@@ -19,6 +20,7 @@ import { Navbar } from "@/components/site/Navbar";
 import { Footer } from "@/components/site/Footer";
 import { Button } from "@/components/ui/button";
 
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -32,6 +34,8 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  console.log(import.meta.env.VITE_SUPABASE_URL);
+  console.log("Supabase Client:", supabase);
   return (
     <div className="min-h-screen">
       <Navbar />

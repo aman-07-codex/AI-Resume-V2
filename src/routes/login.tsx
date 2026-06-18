@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { supabase } from "@/lib/supabase";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AuthCard } from "@/components/site/AuthCard";
 import { Button } from "@/components/ui/button";
@@ -10,6 +12,32 @@ export const Route = createFileRoute("/login")({
 });
 
 function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async () => {
+    try {
+      setLoading(true);
+
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        alert(error.message);
+        return;
+      }
+
+      window.location.href = "/dashboard";
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <AuthCard
       title="Welcome back"
@@ -19,16 +47,32 @@ function Login() {
       <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" placeholder="you@example.com" />
+          <Input
+            id="email"
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Password</Label>
             <a href="#" className="text-xs text-primary hover:underline">Forgot password?</a>
           </div>
-          <Input id="password" type="password" placeholder="••••••••" />
+          <Input
+            id="password"
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
         </div>
-        <Button type="submit" className="w-full gradient-primary text-primary-foreground glow-primary">Login</Button>
+        <Button
+          type="button"
+          onClick={handleLogin}
+          disabled={loading}
+          className="w-full gradient-primary text-primary-foreground glow-primary">Login</Button>
         <div className="relative my-4 text-center text-xs text-muted-foreground">
           <span className="relative z-10 px-2">or</span>
           <span className="absolute left-0 top-1/2 h-px w-full bg-border" />

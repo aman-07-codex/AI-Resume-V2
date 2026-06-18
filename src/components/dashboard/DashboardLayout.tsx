@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import { getCurrentUser } from "@/lib/auth";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard,
@@ -24,6 +26,18 @@ const nav = [
 ] as const;
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
+  const [userEmail, setUserEmail] = useState("");
+  useEffect(() => {
+  async function loadUser() {
+    const user = await getCurrentUser();
+
+    if (user) {
+      setUserEmail(user.email ?? "");
+    }
+  }
+
+  loadUser();
+}, []);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
     <div className="flex min-h-screen w-full">

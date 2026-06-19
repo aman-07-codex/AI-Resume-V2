@@ -23,6 +23,75 @@ const recent = [
 ];
 
 function Dashboard() {
+  const handleAnalyzeResume = async () => {
+  try {
+    if (!selectedResumeId) {
+      alert("Please select a resume");
+      return;
+    }
+
+    if (!jobDescription.trim()) {
+      alert("Please paste a job description");
+      return;
+    }
+
+    const user = await getCurrentUser();
+
+    if (!user) {
+      alert("Please login again");
+      return;
+    }
+
+    // Save Job Description
+    const { data: jdData, error: jdError } = await supabase
+      .from("job_descriptions")
+      .insert({
+        user_id: user.id,
+        title: "Job Description",
+        content: jobDescription,
+      })
+      .select()
+      .single();
+
+    if (jdError) throw jdError;
+
+    // Create Mock Analysis
+    const { data: analysisData, error: analysisError } = await supabase
+      .from("analyses")
+      .insert({
+        user_id: user.id,
+        resume_id: selectedResumeId,
+        job_description_id: jdData.id,
+
+        ats_score: 78,
+        keyword_match: 75,
+
+        missing_skills: [
+          "Kubernetes",
+          "Terraform",
+          "CI/CD"
+        ],
+
+        suggestions: [
+          "Add quantified achievements",
+          "Add cloud experience",
+          "Improve ATS keywords"
+        ]
+      })
+      .select()
+      .single();
+
+    if (analysisError) throw analysisError;
+
+    window.location.href =
+      `/results?analysisId=${analysisData.id}`;
+
+  } catch (error) {
+    console.error(error);
+    alert("Analysis failed");
+  }
+};
+  const [jobDescription, setJobDescription] = useState("");
   const [selectedResumeId, setSelectedResumeId] = useState("");
   const handleDeleteResume = async (
     resumeId: string,
@@ -265,7 +334,12 @@ function Dashboard() {
               <FileText className="h-4 w-4 text-primary" />
               <h2 className="font-semibold">Job Description</h2>
             </div>
-            <Textarea placeholder="Paste the full job description here..." className="min-h-[200px] resize-none" />
+            <Textarea
+              value={jobDescription}
+              onChange={(e) => setJobDescription(e.target.value)}
+              placeholder="Paste the full job description here..."
+              className="min-h-[200px] resize-none"
+            />
           </div>
 
           <div className="glass rounded-3xl p-6">
@@ -280,8 +354,11 @@ function Dashboard() {
                 </label>
               ))}
             </div>
-            <Button asChild className="mt-6 w-full gradient-primary text-primary-foreground glow-primary">
-              <Link to="/results">Analyze Resume <ArrowRight className="ml-1 h-4 w-4" /></Link>
+            <Button
+              className="mt-6 w-full gradient-primary text-primary-foreground glow-primary"
+              onClick={handleAnalyzeResume}
+            >
+              Analyze Resume <ArrowRight className="ml-1 h-4 w-4" />
             </Button>
           </div>
         </div>

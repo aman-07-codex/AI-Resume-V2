@@ -23,7 +23,26 @@ const recent = [
 ];
 
 function Dashboard() {
+  useEffect(() => {
+    loadResumes();
+  }, []);
+  const loadResumes = async () => {
+    const user = await getCurrentUser();
+
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("resumes")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (!error && data) {
+      setResumes(data);
+    }
+  };
   const [uploading, setUploading] = useState(false);
+  const [resumes, setResumes] = useState<any[]>([]);
   const handleResumeUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -63,6 +82,7 @@ function Dashboard() {
 
       if (dbError) throw dbError;
 
+      await loadResumes();
       alert("Resume uploaded successfully!");
     } catch (error) {
       console.error("UPLOAD ERROR:", error);
@@ -132,6 +152,30 @@ function Dashboard() {
                 onChange={handleResumeUpload}
               />
             </label>
+          </div>
+          <div className="glass rounded-3xl p-6 lg:col-span-2">
+            <h2 className="mb-4 font-semibold">My Uploaded Resumes</h2>
+
+            {resumes.length === 0 ? (
+              <p className="text-muted-foreground">
+                No resumes uploaded yet.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {resumes.map((resume) => (
+                  <div
+                    key={resume.id}
+                    className="flex items-center justify-between rounded-xl border p-3"
+                  >
+                    <div>
+                      <p className="font-medium">
+                        {resume.file_name}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

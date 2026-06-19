@@ -23,6 +23,19 @@ const recent = [
 ];
 
 function Dashboard() {
+  const handleViewResume = async (filePath: string) => {
+    const { data, error } = await supabase.storage
+      .from("resumes")
+      .createSignedUrl(filePath, 60);
+
+    if (error) {
+      console.error(error);
+      alert("Unable to open resume");
+      return;
+    }
+
+    window.open(data.signedUrl, "_blank");
+  };
   useEffect(() => {
     loadResumes();
   }, []);
@@ -173,6 +186,13 @@ function Dashboard() {
                         {resume.file_name}
                       </p>
                     </div>
+
+                    <Button
+                      size="sm"
+                      onClick={() => handleViewResume(resume.file_path)}
+                    >
+                      View
+                    </Button>
                   </div>
                 ))}
               </div>

@@ -23,6 +23,7 @@ const recent = [
 ];
 
 function Dashboard() {
+  const [selectedResumeId, setSelectedResumeId] = useState("");
   const handleDeleteResume = async (
     resumeId: string,
     filePath: string
@@ -84,6 +85,10 @@ function Dashboard() {
 
     if (!error && data) {
       setResumes(data);
+
+      if (data.length > 0) {
+        setSelectedResumeId(data[0].id);
+      }
     }
   };
   const [uploading, setUploading] = useState(false);
@@ -213,7 +218,14 @@ function Dashboard() {
                     key={resume.id}
                     className="flex items-center justify-between rounded-xl border p-3"
                   >
-                    <div>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="radio"
+                        name="selectedResume"
+                        checked={selectedResumeId === resume.id}
+                        onChange={() => setSelectedResumeId(resume.id)}
+                      />
+
                       <p className="font-medium">
                         {resume.file_name}
                       </p>

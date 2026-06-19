@@ -78,6 +78,7 @@ function Dashboard() {
           user_id: user.id,
           file_name: file.name,
           file_url: data.publicUrl,
+          file_path: filePath,
         });
 
       if (dbError) throw dbError;

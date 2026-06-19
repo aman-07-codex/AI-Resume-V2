@@ -23,6 +23,38 @@ const recent = [
 ];
 
 function Dashboard() {
+  const handleDeleteResume = async (
+    resumeId: string,
+    filePath: string
+  ) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this resume?"
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const { error: storageError } = await supabase.storage
+        .from("resumes")
+        .remove([filePath]);
+
+      if (storageError) throw storageError;
+
+      const { error: dbError } = await supabase
+        .from("resumes")
+        .delete()
+        .eq("id", resumeId);
+
+      if (dbError) throw dbError;
+
+      await loadResumes();
+
+      alert("Resume deleted successfully");
+    } catch (error) {
+      console.error(error);
+      alert("Delete failed");
+    }
+  };
   const handleViewResume = async (filePath: string) => {
     const { data, error } = await supabase.storage
       .from("resumes")
@@ -187,12 +219,27 @@ function Dashboard() {
                       </p>
                     </div>
 
-                    <Button
-                      size="sm"
-                      onClick={() => handleViewResume(resume.file_path)}
-                    >
-                      View
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleViewResume(resume.file_path)}
+                      >
+                        View
+                      </Button>
+
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() =>
+                          handleDeleteResume(
+                            resume.id,
+                            resume.file_path
+                          )
+                        }
+                      >
+                        Delete
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>

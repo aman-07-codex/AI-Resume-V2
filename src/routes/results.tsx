@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -9,6 +11,46 @@ export const Route = createFileRoute("/results")({
 });
 
 function Results() {
+  const [analysis, setAnalysis] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    async function loadAnalysis() {
+
+      const params = new URLSearchParams(
+        window.location.search
+      );
+
+      const analysisId =
+        params.get("analysisId");
+
+      if (!analysisId) {
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } =
+        await supabase
+          .from("analyses")
+          .select("*")
+          .eq("id", analysisId)
+          .single();
+
+      if (!error) {
+        setAnalysis(data);
+      }
+
+      setLoading(false);
+    }
+
+    loadAnalysis();
+  }, []);
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <p>Loading analysis...</p>
+      </DashboardLayout>
+    );
+  }
   return (
     <DashboardLayout>
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
@@ -26,9 +68,16 @@ function Results() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <BigScore label="ATS Score" value={78} />
+        <BigScore
+          label="ATS Score"
+          value={analysis?.ats_score ?? 0}
+        />
         <BigScore label="Job Match" value={82} suffix="%" tint="from-blue-500 to-cyan-500" />
-        <BigScore label="Keyword Match" value={75} suffix="%" tint="from-violet-500 to-indigo-500" />
+        <BigScore
+          label="Keyword Match"
+          value={analysis?.keyword_match ?? 0}
+          suffix="%"
+        />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
@@ -48,22 +97,22 @@ function Results() {
         </div>
 
         <div className="space-y-6">
-          <PanelList icon={AlertTriangle} title="Missing Skills" tone="warn" items={["Kubernetes", "Terraform", "System design at scale", "Team mentorship"]} />
+          <PanelList icon={AlertTriangle} title="Missing Skills" tone="warn" items={analysis?.missing_skills ?? []} />
           <PanelList icon={Check} title="Resume Strengths" tone="ok" items={["Strong React & TypeScript depth", "Quantified impact in bullets", "Clear progression of responsibility"]} />
         </div>
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <PanelList icon={TrendingUp} title="Improvement Suggestions" items={[
-          "Add a section showcasing system design or scaling work.",
-          "Lead with measurable outcomes (%, $, time saved).",
-          "Trim summary to 3 sentences with a clear positioning.",
-        ]} />
-        <PanelList icon={Sparkles} title="AI Recommendations" items={[
-          "Reword 'Worked on React projects' → 'Shipped 12 React features serving 2M users monthly.'",
-          "Surface 'Kubernetes exposure' in the skills section even if introductory.",
-          "Add a one-line headline above your name: 'Senior Frontend Engineer — React, TypeScript, scalable UIs.'",
-        ]} />
+        <PanelList
+          icon={TrendingUp}
+          title="Improvement Suggestions"
+          items={analysis?.suggestions ?? []}
+        />
+        <PanelList
+          icon={Sparkles}
+          title="AI Recommendations"
+          items={analysis?.suggestions ?? []}
+        />
       </div>
     </DashboardLayout>
   );

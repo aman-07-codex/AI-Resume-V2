@@ -1,3 +1,4 @@
+import { extractTextFromPdf } from "@/lib/pdf";
 import { supabase } from "@/lib/supabase";
 import { getCurrentUser } from "@/lib/auth";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -24,73 +25,73 @@ const recent = [
 
 function Dashboard() {
   const handleAnalyzeResume = async () => {
-  try {
-    if (!selectedResumeId) {
-      alert("Please select a resume");
-      return;
+    try {
+      if (!selectedResumeId) {
+        alert("Please select a resume");
+        return;
+      }
+
+      if (!jobDescription.trim()) {
+        alert("Please paste a job description");
+        return;
+      }
+
+      const user = await getCurrentUser();
+
+      if (!user) {
+        alert("Please login again");
+        return;
+      }
+
+      // Save Job Description
+      const { data: jdData, error: jdError } = await supabase
+        .from("job_descriptions")
+        .insert({
+          user_id: user.id,
+          title: "Job Description",
+          content: jobDescription,
+        })
+        .select()
+        .single();
+
+      if (jdError) throw jdError;
+
+      // Create Mock Analysis
+      const { data: analysisData, error: analysisError } = await supabase
+        .from("analyses")
+        .insert({
+          user_id: user.id,
+          resume_id: selectedResumeId,
+          job_description_id: jdData.id,
+
+          ats_score: 78,
+          keyword_match: 75,
+
+          missing_skills: [
+            "Kubernetes",
+            "Terraform",
+            "CI/CD"
+          ],
+
+          suggestions: [
+            "Add quantified achievements",
+            "Add cloud experience",
+            "Improve ATS keywords"
+          ]
+        })
+        .select()
+        .single();
+
+      if (analysisError) throw analysisError;
+
+      window.location.href =
+        `/results?analysisId=${analysisData.id}`;
+
+    } catch (error) {
+      console.error(error);
+      alert("Analysis failed");
     }
-
-    if (!jobDescription.trim()) {
-      alert("Please paste a job description");
-      return;
-    }
-
-    const user = await getCurrentUser();
-
-    if (!user) {
-      alert("Please login again");
-      return;
-    }
-
-    // Save Job Description
-    const { data: jdData, error: jdError } = await supabase
-      .from("job_descriptions")
-      .insert({
-        user_id: user.id,
-        title: "Job Description",
-        content: jobDescription,
-      })
-      .select()
-      .single();
-
-    if (jdError) throw jdError;
-
-    // Create Mock Analysis
-    const { data: analysisData, error: analysisError } = await supabase
-      .from("analyses")
-      .insert({
-        user_id: user.id,
-        resume_id: selectedResumeId,
-        job_description_id: jdData.id,
-
-        ats_score: 78,
-        keyword_match: 75,
-
-        missing_skills: [
-          "Kubernetes",
-          "Terraform",
-          "CI/CD"
-        ],
-
-        suggestions: [
-          "Add quantified achievements",
-          "Add cloud experience",
-          "Improve ATS keywords"
-        ]
-      })
-      .select()
-      .single();
-
-    if (analysisError) throw analysisError;
-
-    window.location.href =
-      `/results?analysisId=${analysisData.id}`;
-
-  } catch (error) {
-    console.error(error);
-    alert("Analysis failed");
-  }
-};
+  };
   const [jobDescription, setJobDescription] = useState("");
   const [selectedResumeId, setSelectedResumeId] = useState("");
   const handleDeleteResume = async (
@@ -169,6 +170,11 @@ function Dashboard() {
 
     if (!file) return;
 
+    const resumeText =
+      await extractTextFromPdf(file);
+
+    console.log(resumeText);
+
     try {
       setUploading(true);
 
@@ -191,14 +197,17 @@ function Dashboard() {
         .from("resumes")
         .getPublicUrl(filePath);
 
+      const publicUrl = data.publicUrl;
+
       const { error: dbError } = await supabase
         .from("resumes")
         .insert({
           user_id: user.id,
           file_name: file.name,
-          file_url: data.publicUrl,
+          file_url: publicUrl,
           file_path: filePath,
-        });
+          resume_text: resumeText,
+        })
 
       if (dbError) throw dbError;
 
